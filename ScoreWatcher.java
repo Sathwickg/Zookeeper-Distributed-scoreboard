@@ -1,4 +1,3 @@
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -39,7 +38,6 @@ public class ScoreWatcher {
 	private static String path = "/players";
 
 	private static int maxSize;
-	private static boolean isRootWatched;
 	private static List<Score> highestScores = new ArrayList<Score>();
 	private static List<Score> mostRecentScores= new ArrayList<Score>();
 	private static Set<String> watcherSet = new HashSet<String>();;
@@ -74,11 +72,11 @@ public class ScoreWatcher {
 
 	public static void chainedWatcher(String root, final boolean isRoot) throws InterruptedException,KeeperException {
 		zk.getChildren(root, new Watcher() {
-			public void process(WatchedEvent we) {	                
+			public void process(WatchedEvent event) {	                
 				try {
 					displayScoreboard();
 					if(isRoot) {
-						isRootWatched = false;
+						chainedWatcher(path, true);
 						String newPlayerName="";
 						List<String> players = zk.getChildren(path, false);
 						for(int i = 0; i < players.size(); i++) {
@@ -91,16 +89,12 @@ public class ScoreWatcher {
 						String newPlayer = path + "/" + newPlayerName;
 						watcherSet.add(newPlayer);
 					}else {
-						watcherSet.add(we.getPath());
+						watcherSet.add(event.getPath());
 					}
 					if(watcherSet.size() > 0) {
 						for(String name: watcherSet)
 							chainedWatcher(name, false);
 						watcherSet.clear();
-					}
-					if(!isRootWatched) {
-						chainedWatcher(path, true);
-						isRootWatched = true;
 					}
 				} catch(Exception ex) {
 					System.out.println(ex.getMessage());
@@ -124,10 +118,15 @@ public class ScoreWatcher {
 		List<Score> mostRecentScores = sortList(scores,true);
 		List<Score> maxMostRecentScores = (mostRecentScores.size()>maxSize)?mostRecentScores.subList(0, maxSize):new ArrayList<Score>(mostRecentScores);
 
-		System.out.println("Most recent scores");
-		System.out.println("------------------");
+		System.out.println("  Most recent scores  ");
+		System.out.println("----------------------");
 		for(int i = 0; i < maxMostRecentScores.size(); i++) {
-			System.out.println(maxMostRecentScores.get(i).name + "\t" + maxMostRecentScores.get(i).score + " " + (maxMostRecentScores.get(i).isOnline ? "**" : ""));
+			System.out.print(maxMostRecentScores.get(i).name);
+			System.out.print("\t\t" + maxMostRecentScores.get(i).score+" ");
+			if(maxMostRecentScores.get(i).isOnline) {
+				System.out.print("**");
+			}		
+			System.out.println();
 		}
 		
 		List<Score> highestScores = sortList(scores,false);
@@ -135,10 +134,15 @@ public class ScoreWatcher {
 
 		
 		System.out.println();
-		System.out.println("Highest scores");
-		System.out.println("--------------");
+		System.out.println("  Highest scores  ");
+		System.out.println("------------------");
 		for(int i = 0; i < maxHighestScores.size(); i++) {
-			System.out.println(maxHighestScores.get(i).name + "\t" + maxHighestScores.get(i).score + " " + (maxHighestScores.get(i).isOnline ? "**" : ""));
+			System.out.print(maxHighestScores.get(i).name);
+			System.out.print("\t\t" + maxHighestScores.get(i).score+" ");
+			if(maxHighestScores.get(i).isOnline) {
+				System.out.print("**");				
+			}
+			System.out.println();
 		}
 
 	}
@@ -171,14 +175,17 @@ public class ScoreWatcher {
 			if(isValidZnode(path)) {
 				List<String> players = zk.getChildren(path, false);
 				chainedWatcher(path, true);
-				isRootWatched = true;
 				for(int i=0;i<players.size();i++) {
 					chainedWatcher(path + "/" + players.get(i), false);
 					oldPlayers.add(players.get(i));
 				}
 				
 				displayScoreboard();
-			}		
+			}else{ 
+                System.out.println("No available scores. Exiting...");
+                System.exit(-1);
+            }
+			
 			Scanner sc = new Scanner(System.in);
             while(true) {
                 sc.next();
