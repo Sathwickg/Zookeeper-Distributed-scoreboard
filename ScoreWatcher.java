@@ -1,4 +1,3 @@
-package com.ncsu.zookeeper.submit;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -91,7 +90,6 @@ public class ScoreWatcher {
 						}
 						String newPlayer = path + "/" + newPlayerName;
 						watcherSet.add(newPlayer);
-						System.out.println("CHILD ADDED " + newPlayer);
 					}else {
 						watcherSet.add(we.getPath());
 					}
@@ -118,7 +116,6 @@ public class ScoreWatcher {
 		for(String player:players) {
 			boolean isPlayerOnline = zk.exists(path+"/"+player+"/online", true)==null?false:true;
 			List<String> playerChilds = zk.getChildren(path+"/"+player, false);
-			System.out.println("size"+playerChilds.size());
 			for(String child:playerChilds) {								
 				if(child.equalsIgnoreCase("online"))continue;				
 				scores.add(new Score(isPlayerOnline,player,Long.parseLong(child),Integer.parseInt(new String(zk.getData(path + "/" + player + "/" + child, false, null), "UTF-8"))));
@@ -148,7 +145,7 @@ public class ScoreWatcher {
 	
 	public static List<Score> sortList(List<Score> scores,final boolean isTimestamp) {
 		List<Score> tempList = new ArrayList<Score>(scores);
-        Collections.sort(scores, new Comparator<Score>(){
+        Collections.sort(tempList, new Comparator<Score>(){
             public int compare(Score p1, Score p2) {
             	if(isTimestamp) {
             		 return (int) (p2.timeStamp - p1.timeStamp);
