@@ -1,4 +1,3 @@
-package com.ncsu.zookeeper.submit;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -19,8 +18,7 @@ public class Player {
 		zk = new ZooKeeper(host, 5000, new Watcher() {
 			
 			public void process(WatchedEvent event) {
-				if(event.getState() == KeeperState.SyncConnected) {
-					System.out.println(event.getType());					
+				if(event.getState() == KeeperState.SyncConnected) {				
 				}
 			}
 		});
