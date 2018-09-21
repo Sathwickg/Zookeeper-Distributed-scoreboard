@@ -1,5 +1,6 @@
 
 import java.io.IOException;
+import java.util.Random;
 import java.util.Scanner;
 
 import org.apache.zookeeper.CreateMode;
@@ -41,16 +42,13 @@ public class Player {
 		 return zk.exists(path, true)==null?false:true;
 	}
 	
-	public static void scoreAutomation(String count,String delay,String score) {
-		
-	}
-	
 	public static void main(String[] args) throws IllegalStateException, IOException, InterruptedException, KeeperException {
 		
 		Scanner input = new Scanner(System.in);
 
-		String host ="", pName = "", count = "",delay = "", score = "";
-		
+		String host ="", pName = "",scoreString = "";
+		int count = 0,score = 0;
+		long delay = 0;
 		boolean isUserInput = false;
 		
 		if(args.length<2) {
@@ -60,12 +58,12 @@ public class Player {
 			 pName = args[1];
 			 isUserInput = true;
 		}else {
-			 host = args[1];
-			 pName = args[2];
-			 count = args[3];
-			 delay = args[4];
-			 score = args[5];
-			 
+			 host = args[0];
+			 pName = args[1];
+			 count = Integer.parseInt(args[2]);
+			 delay = Long.parseLong(args[3]);
+			 scoreString = args[4];
+			 score =  Integer.parseInt(scoreString);
 		}
 		
 		zk = connect(host);
@@ -83,11 +81,34 @@ public class Player {
 		if(isUserInput) {
 			while(true){
 				System.out.println("Please enter a score: ");
-				score = input.next();
-				create(path+"/"+System.currentTimeMillis(),score.getBytes(),true);
+				scoreString = input.next();
+				create(path+"/"+System.currentTimeMillis(),scoreString.getBytes(),true);
 			}
 		}else {
-			scoreAutomation(count,delay,score);
+			
+			Random rnd = new Random();
+			
+			int rdelay = 0,rscore;
+			while(count>0) {
+				
+				Thread.sleep(rdelay);
+				
+					do {
+					  double val = rnd.nextGaussian() * 500/3 + delay;
+					  rdelay = (int) Math.round(val);
+					} while (rdelay <= 0);
+					
+					
+					do {
+					  double val = rnd.nextGaussian() * 500/3 + score;
+					  rscore = (int) Math.round(val);
+					} while (rscore <= 0);
+					
+					System.out.println("Created score :"+rscore+" delay :"+ rdelay);
+					create(path+"/"+System.currentTimeMillis(),(rscore+"").getBytes(),true);
+					
+					count--;
+			}			
 		}
 		input.close();
 	}
